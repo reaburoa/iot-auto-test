@@ -107,7 +107,7 @@ class ScanBoxService extends IotService
         $topic = $this->getSubTopic($msn, self::MODEL);
         if ($last_test) {
             echo "{$msn} is upgrading ...\n";
-            if ((time() - strtotime($last_test['created_at'])) >= 70 * 60) {
+            if ((time() - strtotime($last_test['created_at'])) >= 80 * 60) {
                 $detail_model->updateFirmwareUpgradeState($msn, self::MODEL, $last_test['to_firmware_version'], 2);
                 $emqtt_instance->publish($topic, json_encode(self::RESTART_COMMAND));
             }

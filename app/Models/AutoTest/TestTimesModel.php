@@ -26,9 +26,11 @@ class TestTimesModel extends Model
         return $this->getModel()->insert($data);
     }
 
-    public function updateByTimes($times, $update_value)
+    public function updateByTimes($times, $update_value, $model)
     {
-        return $this->getModel()->where('turn_times', $times)->update($update_value);
+        return $this->getModel()
+            ->where('turn_times', $times)
+            ->where('model', $model)->update($update_value);
     }
 
     public function getByTimes($times)

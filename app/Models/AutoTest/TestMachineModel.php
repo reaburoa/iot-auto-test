@@ -45,7 +45,7 @@ class TestMachineModel extends Model
         return $this->getModel()->where('model', $model)->where('msn', $msn)->increment('turn_times', $increment);
     }
 
-    public function getMachineTotalGroupbyTestTurn($model)
+    public function getMachineTotalGroupByTestTurn($model)
     {
         return $this->getModel()->where('model', $model)->where('enabled', 0)->select(DB::raw('turn_times, count(turn_times) as times'))->groupBy('turn_times')->get();
     }

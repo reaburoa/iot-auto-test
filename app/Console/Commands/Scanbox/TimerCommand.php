@@ -60,7 +60,7 @@ class TimerCommand extends Command
             $client->onConnect = function ($client) {
                 while (true) {
                     $m_model = new TestMachineModel();
-                    $test_turn = $m_model->getMachineTotalGroupbyTestTurn(ScanBoxService::MODEL);
+                    $test_turn = $m_model->getMachineTotalGroupByTestTurn(ScanBoxService::MODEL);
                     $test_turn = json_decode(json_encode($test_turn), true);
                     $keys = array_values(array_filter(array_keys($test_turn)));
                     $restart_all = false;

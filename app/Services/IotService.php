@@ -38,15 +38,13 @@ class IotService extends Service
     public function updateTestStat($model)
     {
         $m_model = new TestMachineModel();
-        $test_turn = $m_model->getMachineTotalGroupbyTestTurn($model);
+        $detail_model = new TestFirmwareDetailModel();
+        $test_turn = $detail_model->getMachineTotalGroupByTestTurn($model);
         $test_turn = json_decode(json_encode($test_turn), true);
         $t_model = new TestTimesModel();
         $total_machines = $m_model->getTotalMachines($model);
         $now = date('Y-m-d H:i:s');
         foreach ($test_turn as $value) {
-            if ($value['turn_times'] == 0) {
-                continue;
-            }
             $has = $t_model->getByTimes($value['turn_times']);
             if ($has) {
                 $data = [
@@ -54,12 +52,13 @@ class IotService extends Service
                     'succ_machine' => $value['times'],
                     'updated_at' => $now,
                 ];
-                $t_model->updateByTimes($value['turn_times'], $data);
+                $t_model->updateByTimes($value['turn_times'], $data, $model);
             } else {
                 $data = [
                     'turn_times' => $value['turn_times'],
                     'total_machine' => $total_machines,
                     'succ_machine' => $value['times'],
+                    'model' => $model,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
