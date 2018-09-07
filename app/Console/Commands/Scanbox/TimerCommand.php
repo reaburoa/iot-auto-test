@@ -44,7 +44,7 @@ class TimerCommand extends Command
     {
         $command = $this->argument('op');
         global $argv;
-        $argv[0] = 'scan_box:subscribe';
+        $argv[0] = 'scan_box:timer';
         $argv[1] = $command;
         unset($argv[2]);
         $user = ScanBoxService::getInstance()->getActiveUser();
