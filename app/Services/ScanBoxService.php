@@ -96,7 +96,6 @@ class ScanBoxService extends IotService
             $upgrade_state = 1;
         }
         $test_ret = $detail_model->updateFirmwareUpgradeState($msn, self::MODEL, $data['bv'], $upgrade_state);
-        $this->updateTestStat(self::MODEL);
         return $ret === false ? false : $machine_info;
     }
 
@@ -139,6 +138,7 @@ class ScanBoxService extends IotService
         ];
         $detail_model->insert($data);
         self::$DOWNLOAD_COMMAND['c02'] = $will_grade_info['task'];
+        $this->updateTestStat(self::MODEL);
         $emqtt_instance->publish($topic, json_encode(self::$DOWNLOAD_COMMAND));
     }
 
