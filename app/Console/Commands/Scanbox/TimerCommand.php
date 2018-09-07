@@ -11,6 +11,7 @@ use Workerman\Worker;
 
 class TimerCommand extends Command
 {
+    public static $restart_times = [];
     /**
      * The name and signature of the console command.
      *
@@ -62,28 +63,35 @@ class TimerCommand extends Command
                     $m_model = new TestMachineModel();
                     $test_turn = $m_model->getMachineTotalGroupByTestTurn(ScanBoxService::MODEL);
                     $test_turn = json_decode(json_encode($test_turn), true);
-                    $keys = array_values(array_filter(array_keys($test_turn)));
+                    $keys = array_values(array_filter(array_column($test_turn, 'turn_times')));
                     $restart_all = false;
                     if (count($keys) >= 2) {
                         echo "Has more than 2 turns is upgrading ...\n";
                         $restart_all = true;
                     } else {
                         $m_times = new TestTimesModel();
+                        rsort($keys);
                         $times = $keys[0];
                         $ret = $m_times->getByTimes($times);
                         if ($ret && (time() - strtotime($ret->created_at)) >= 90 * 60) {
-                            echo "{$times} has test 90 minutes,than all will restart ...\n";
                             $restart_all = true;
                         }
                     }
                     if ($restart_all) {
+                        if (isset(self::$restart_times[$times])) {
+                            sleep(120);
+                            continue;
+                        }
                         $all_msn = $m_model->getAllMsn(ScanBoxService::MODEL);
                         $topics = array_map(function ($val) {
                             return ScanBoxService::getInstance()->getSubTopic($val, ScanBoxService::MODEL);
                         }, array_column($all_msn, 'msn'));
                         foreach ($topics as $t) {
+                            echo "Push to topic {$t} command ".json_encode(ScanBoxService::RESTART_COMMAND)."\n";
                             $client->publish($t, json_encode(ScanBoxService::RESTART_COMMAND));
                         }
+                        self::$restart_times[$times] = 1;
+                        sleep(300);
                     }
                     sleep(60);
                 }
