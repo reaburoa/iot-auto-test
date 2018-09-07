@@ -64,6 +64,9 @@ class TimerCommand extends Command
                     $test_turn = $m_model->getMachineTotalGroupByTestTurn(ScanBoxService::MODEL);
                     $test_turn = json_decode(json_encode($test_turn), true);
                     $keys = array_values(array_filter(array_column($test_turn, 'turn_times')));
+                    if (empty($keys)) {
+                        continue;
+                    }
                     $restart_all = false;
                     if (count($keys) >= 2) {
                         echo "Has more than 2 turns is upgrading ...\n";
