@@ -65,38 +65,32 @@ class TimerCommand extends Command
                     $test_turn = json_decode(json_encode($test_turn), true);
                     $keys = array_values(array_filter(array_column($test_turn, 'turn_times')));
                     if (empty($keys)) {
+                        echo "There is no test turn machine,and will sleep 5 minutes ...\n";
+                        sleep(300);
                         continue;
                     }
-                    $restart_all = false;
-                    if (count($keys) >= 2) {
-                        echo "Has more than 2 turns is upgrading ...\n";
-                        $restart_all = true;
-                    } else {
-                        $m_times = new TestTimesModel();
-                        rsort($keys);
-                        $times = $keys[0];
-                        $ret = $m_times->getByTimes($times);
-                        if ($ret && (time() - strtotime($ret->created_at)) >= 90 * 60) {
-                            $restart_all = true;
-                        }
-                    }
-                    if ($restart_all) {
-                        if (isset(self::$restart_times[$times])) {
-                            sleep(120);
-                            continue;
-                        }
+                    rsort($keys);
+                    $m_times = new TestTimesModel();
+                    $times = $keys[0];
+                    $ret = $m_times->getByTimes($times);
+                    if ($ret && (time() - strtotime($ret->created_at)) >= 90 * 60) {
                         $all_msn = $m_model->getAllMsn(ScanBoxService::MODEL);
-                        $topics = array_map(function ($val) {
-                            return ScanBoxService::getInstance()->getSubTopic($val, ScanBoxService::MODEL);
-                        }, array_column($all_msn, 'msn'));
-                        foreach ($topics as $t) {
-                            echo "Push to topic {$t} command ".json_encode(ScanBoxService::RESTART_COMMAND)."\n";
-                            $client->publish($t, json_encode(ScanBoxService::RESTART_COMMAND));
-                        }
-                        self::$restart_times[$times] = 1;
-                        sleep(300);
+                        $msn_list = array_column($all_msn, 'msn');
+                        echo "Turn {$times} has timeout (time is: 90 minutes), will restart all and run new turn ...\n";
+                    } else {
+                        $not_current_turns = $m_model->getNotTurn($times, ScanBoxService::MODEL);
+                        $msn_list = array_column($not_current_turns, 'msn');
+                        echo "Not Turn {$times}, and machine will restart ...\n";
                     }
-                    sleep(60);
+                    $topics = array_map(function ($val) {
+                        return ScanBoxService::getInstance()->getSubTopic($val, ScanBoxService::MODEL);
+                    }, $msn_list);
+                    foreach ($topics as $t) {
+                        echo "Push to topic {$t} command ".json_encode(ScanBoxService::RESTART_COMMAND)."\n";
+                        $client->publish($t, json_encode(ScanBoxService::RESTART_COMMAND));
+                    }
+                    echo "Will sleep 5 minutes wait for machine restart ...\n";
+                    sleep(300);
                 }
             };
             $client->connect();

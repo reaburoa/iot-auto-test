@@ -37,18 +37,42 @@ class IotService extends Service
 
     public function updateTestStat($model)
     {
-        $m_model = new TestMachineModel();
         $detail_model = new TestFirmwareDetailModel();
-        $test_turn = $detail_model->getMachineTotalGroupByTestTurn($model);
+        $test_turn = $detail_model->getAllTurnTimes($model);
         $test_turn = json_decode(json_encode($test_turn), true);
         $t_model = new TestTimesModel();
-        $total_machines = $m_model->getTotalMachines($model);
         $now = date('Y-m-d H:i:s');
+        // 查出所有轮次的正在更新机器总数
         foreach ($test_turn as $value) {
             $has = $t_model->getByTimes($value['turn_times']);
             if ($has) {
                 $data = [
-                    'total_machine' => $total_machines,
+                    'total_machine' => $value['times'],
+                    'succ_machine' => 0,
+                    'updated_at' => $now,
+                ];
+                $t_model->updateByTimes($value['turn_times'], $data, $model);
+            } else {
+                $data = [
+                    'turn_times' => $value['turn_times'],
+                    'total_machine' => $value['times'],
+                    'succ_machine' => 0,
+                    'model' => $model,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+                $t_model->insert($data);
+            }
+        }
+        $success_turn = $detail_model->getMachineTotalGroupByTestTurn($model);
+        $success_turn = json_decode(json_encode($success_turn), true);
+        $m_model = new TestMachineModel();
+        $total = $m_model->getTotalMachines($model);
+        // 更新每轮次成功的机器数目
+        foreach ($success_turn as $value) {
+            $has = $t_model->getByTimes($value['turn_times']);
+            if ($has) {
+                $data = [
                     'succ_machine' => $value['times'],
                     'updated_at' => $now,
                 ];
@@ -56,7 +80,7 @@ class IotService extends Service
             } else {
                 $data = [
                     'turn_times' => $value['turn_times'],
-                    'total_machine' => $total_machines,
+                    'total_machine' => $total,
                     'succ_machine' => $value['times'],
                     'model' => $model,
                     'created_at' => $now,

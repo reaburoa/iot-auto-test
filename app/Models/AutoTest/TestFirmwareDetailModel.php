@@ -86,6 +86,14 @@ class TestFirmwareDetailModel extends Model
             ->where('firmware_upgrade_state', -1)->count();
     }
 
+    public function getAllTurnTimes($model)
+    {
+        return $this->getModel()
+            ->where('model', $model)
+            ->select(DB::raw('turn_times, count(turn_times) as times'))
+            ->groupBy('turn_times')->get();
+    }
+
     public function getMachineTotalGroupByTestTurn($model)
     {
         return $this->getModel()

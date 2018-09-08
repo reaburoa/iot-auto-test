@@ -59,4 +59,9 @@ class TestMachineModel extends Model
     {
         return self::query()->where('model', $model)->where('enabled', 0)->orderBy('id', 'desc')->select()->get()->toArray();
     }
+
+    public function getNotTurn($turn_times, $model)
+    {
+        return self::query()->where('model', $model)->where('turn_time', '!=', $turn_times)->select()->get()->toArray();
+    }
 }
