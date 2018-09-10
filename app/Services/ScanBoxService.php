@@ -109,11 +109,11 @@ class ScanBoxService extends IotService
             }
             return '';
         }
-        $upgrading_total = $detail_model->getUpgradingTotal($machine_info['turn_times'], self::MODEL);
+        /*$upgrading_total = $detail_model->getUpgradingTotal($machine_info['turn_times'], self::MODEL);
         if ($upgrading_total > 0) {
             echo "{$machine_info['turn_times']} has other machine upgrade \n";
             return '';
-        }/* elseif ($machine_info['turn_times'] != 0 && $upgrading_total == 0) {
+        } elseif ($machine_info['turn_times'] != 0 && $upgrading_total == 0) {
             echo "{$machine_info['turn_times']} has no machine upgrade and wait for restart all machine \n";
             return '';
         }*/
