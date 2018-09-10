@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\AutoTest\TestFirmwareDetailModel;
-use App\Models\AutoTest\TestAppDetailModel;
 use App\Models\AutoTest\TestMachineModel;
 
 class MarioService extends IotService
@@ -36,25 +35,18 @@ class MarioService extends IotService
         ]
     ];
 
-    const BIN176 = [
-        'hardware_version' => '1.7.6',
-        'url' => 'test.cdn.sunmi.com/IOT-OTA/15329474538827.bin',
-        'size' => 2211904,
-        'md5' => '30b6127c54cc85dcc78fa31f8855fb3b'
+    const BIN5509 = [
+        'hardware_version' => '1.55.09',
+        'url' => 'https://test.cdn.sunmi.com/IOT-OTA/FR010-FR010-1.55.09.zip',
+        'size' => 5971092,
+        'md5' => '1c0e1ea9b88b3bf64d1866c1b5814d6e'
     ];
 
-    const BIN276 = [
-        'hardware_version' => '2.7.6',
-        'url' => 'test.cdn.sunmi.com/IOT-OTA/15329474645101.bin',
-        'size' => 2211904,
-        'md5' => 'ddad0b2298248ad4a06d9643b28abc2b'
-    ];
-
-    const BIN376 = [
-        'hardware_version' => '3.7.6',
-        'url' => 'test.cdn.sunmi.com/IOT-OTA/15329474768283.bin',
-        'size' => 2211904,
-        'md5' => '2c8dadb6b52fa93505e915dfa55ef11f'
+    const BIN5510 = [
+        'hardware_version' => '1.55.10',
+        'url' => 'https://test.cdn.sunmi.com/IOT-OTA/FR010-FR010-1.55.10.zip',
+        'size' => 5971558,
+        'md5' => 'a2312d5a3aa4a9569ad7f4198b7f0e96'
     ];
 
     /**
@@ -73,27 +65,23 @@ class MarioService extends IotService
             echo "{$msn} is not in test list ...\n";
             return false;
         }
-        if ($data['bv'] != $machine_info['firmware_version'] || $data['appv'] != $machine_info['app_version']) {
-            $machine = [
-                'firmware_version' => $data['bv'],
-                'app_version' => $data['appv'],
-                'updated_at' => $now,
-            ];
-            $ret = $m_model->updateByMsn($msn, self::MODEL, $machine);
-            $machine_info['firmware_version'] = $data['bv'];
-            $machine_info['updated_at'] = $now;
+        if ($data['bv'] == $machine_info['firmware_version']) {
+            return $machine_info;
         }
+        $machine = [
+            'firmware_version' => $data['bv'],
+            'updated_at' => $now,
+        ];
+        $ret = $m_model->updateByMsn($msn, self::MODEL, $machine);
+        $machine_info['firmware_version'] = $data['bv'];
+        $machine_info['updated_at'] = $now;
         $detail_model = new TestFirmwareDetailModel();
         $last_upgrade_info = $detail_model->getByMsn($msn, self::MODEL);
-        $upgrade_state = 1;
-        if ($last_upgrade_info && $last_upgrade_info['to_firmware_version'] != $data['bv']) {
-            $upgrade_state = 0;
+        $upgrade_state = 0;
+        if ($last_upgrade_info && $last_upgrade_info['to_firmware_version'] == $data['bv']) {
+            $upgrade_state = 1;
         }
         $test_ret = $detail_model->updateFirmwareUpgradeState($msn, self::MODEL, $data['bv'], $upgrade_state);
-        if ($test_ret) {
-            $ret = $m_model->incrementTestTimes($msn, self::MODEL);
-        }
-        $this->updateTestStat(self::MODEL);
         return $ret === false ? false : $machine_info;
     }
 
@@ -101,14 +89,26 @@ class MarioService extends IotService
     {
         $detail_model = new TestFirmwareDetailModel();
         $last_test = $detail_model->hasUpgradeFirmware($msn, self::MODEL);
+        $topic = $this->getSubTopic($msn, self::MODEL);
         if ($last_test) {
             echo "{$msn} is upgrading ...\n";
+            if ((time() - strtotime($last_test['created_at'])) >= 80 * 60) {
+                $detail_model->updateFirmwareUpgradeState($msn, self::MODEL, $last_test['to_firmware_version'], 2);
+                $emqtt_instance->publish($topic, json_encode(self::RESTART_COMMAND));
+            }
             return '';
         }
+        $upgrading_total = $detail_model->getUpgradingTotal($machine_info['turn_times']);
+        if ($upgrading_total > 0) {
+            echo "{$machine_info['turn_times']} has other machine upgrade \n";
+            return '';
+        }
+        $m_model = new TestMachineModel();
         $will_grade_info = $this->getWillUpgradeInfo($machine_info);
         if (empty($will_grade_info)) {
             return false;
         }
+        $ret = $m_model->incrementTestTimes($msn, self::MODEL);
         $now = date('Y-m-d H:i:s');
         $data = [
             'msn' => $msn,
@@ -118,41 +118,36 @@ class MarioService extends IotService
             'firmware_upgrade_start' => $now,
             'firmware_download_state' => -1,
             'firmware_upgrade_state' => -1,
+            'turn_times' => $machine_info['turn_times'] + 1,
             'created_at' => $now,
             'updated_at' => $now,
         ];
         $detail_model->insert($data);
-        $topic = $this->getSubTopic($msn, self::MODEL);
         self::$DOWNLOAD_FIRMWARE_COMMAND['c02'] = $will_grade_info['task'];
+        $this->updateTestStat(self::MODEL);
         $emqtt_instance->publish($topic, json_encode(self::$DOWNLOAD_FIRMWARE_COMMAND));
     }
 
     public function getWillUpgradeInfo($machine_info)
     {
-        if (preg_match('/^1\./', $machine_info['firmware_version'])) {
+        if ($machine_info['firmware_version'] == '1.55.09') {
             echo "Will Push Upgrade Task ...\n";
             $task = self::$DOWNLOAD_FIRMWARE_COMMAND['c02'] = [
-                'url' => self::BIN276['url'],
-                'size' => self::BIN276['size'],
-                'md5' => self::BIN276['md5']
+                'url' => self::BIN5510['url'],
+                'size' => self::BIN5510['size'],
+                'md5' => self::BIN5510['md5'],
+                'upgrade' => 1
             ];
-            $firmware = self::BIN276['hardware_version'];
-        } elseif (preg_match('/^2\./', $machine_info['firmware_version'])) {
+            $firmware = self::BIN5510['hardware_version'];
+        } elseif ($machine_info['firmware_version'] == '1.55.10') {
             echo "Will Push Upgrade Task ...\n";
             $task = self::$DOWNLOAD_FIRMWARE_COMMAND['c02'] = [
-                'url' => self::BIN376['url'],
-                'size' => self::BIN376['size'],
-                'md5' => self::BIN376['md5']
+                'url' => self::BIN5509['url'],
+                'size' => self::BIN5509['size'],
+                'md5' => self::BIN5509['md5'],
+                'upgrade' => 1
             ];
-            $firmware = self::BIN376['hardware_version'];
-        } elseif (preg_match('/^3\./', $machine_info['firmware_version'])) {
-            echo "Will Push Upgrade Task ...\n";
-            $task = self::$DOWNLOAD_FIRMWARE_COMMAND['c02'] = [
-                'url' => self::BIN176['url'],
-                'size' => self::BIN176['size'],
-                'md5' => self::BIN176['md5']
-            ];
-            $firmware = self::BIN176['hardware_version'];
+            $firmware = self::BIN5509['hardware_version'];
         } else {
             echo "Firmware version is not test version ...\n";
             return [];

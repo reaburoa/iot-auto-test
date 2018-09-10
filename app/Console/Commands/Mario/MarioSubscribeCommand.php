@@ -65,20 +65,16 @@ class MarioSubscribeCommand extends Command
         $ar_topic = explode('/', $topic);
         $content = json_decode($content, true);
         if (empty($ar_topic[0]) && $ar_topic[count($ar_topic) - 1] == 'pub') {
-            $msn = $ar_topic['2'];
-            if (isset($content['s01'])) {
+            $msn = $ar_topic[2];
+            if (isset($content['s01'])) { // 终端信息
                 $ret = MarioService::getInstance()->dealS01($msn, $content['s01']);
                 MarioService::getInstance()->upgrade($msn, $ret, $emqtt_instance);
             } elseif (isset($content['s02'])) {
-                //
-            } elseif (isset($content['s03'])) {
-                //
+
+            } elseif (isset($content['s03'])) { // 设置推送
+
             } elseif (isset($content['s04'])) {
                 $ret = MarioService::getInstance()->dealS04($msn, $content, MarioService::MODEL);
-                $t = MarioService::getInstance()->getSubTopic($msn, MarioService::MODEL);
-                $emqtt_instance->publish($t, json_encode(MarioService::RESTART_COMMAND));
-            } elseif (isset($content['s05'])) {
-                //
             }
         } elseif ($ar_topic[0] == '$SYS') {
             $msn = $ar_topic[4];

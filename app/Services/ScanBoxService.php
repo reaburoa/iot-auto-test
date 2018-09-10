@@ -61,8 +61,6 @@ class ScanBoxService extends IotService
         'md5' => '6c538e9f1cd50c3a5c7b5573052c0cd2'
     ];
 
-    public static $machine_publish_info = null;
-
     /**
      * 上报终端信息，版本、经纬度等
      */
