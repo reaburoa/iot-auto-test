@@ -68,6 +68,12 @@ class MarioSubscribeCommand extends Command
             $msn = $ar_topic[2];
             if (isset($content['s01'])) { // 终端信息
                 $ret = MarioService::getInstance()->dealS01($msn, $content['s01']);
+                $t = MarioService::getInstance()->getSubTopic($msn, MarioService::MODEL);
+                MarioService::$SERVER_UNIX_TIME_COMMAND['c01']['timestamp'] = time();
+                $time = json_encode(MarioService::$SERVER_UNIX_TIME_COMMAND);
+                echo "Publish to {$t} Server time {$time} \n";
+                $emqtt_instance->publish($t, $time);
+                echo "Check if Publish Firmware upgrade ...\n";
                 MarioService::getInstance()->upgrade($msn, $ret, $emqtt_instance);
             } elseif (isset($content['s02'])) {
 
@@ -75,6 +81,8 @@ class MarioSubscribeCommand extends Command
 
             } elseif (isset($content['s04'])) {
                 $ret = MarioService::getInstance()->dealS04($msn, $content, MarioService::MODEL);
+            } elseif (isset($content['s05'])) {
+                
             }
         } elseif ($ar_topic[0] == '$SYS') {
             $msn = $ar_topic[4];

@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Scanbox;
 
 use App\Services\ExportService;
+use App\Services\ScanBoxService;
 use Illuminate\Console\Command;
 
 class ScanboxExportCommand extends Command
@@ -38,6 +39,7 @@ class ScanboxExportCommand extends Command
      */
     public function handle()
     {
-        ExportService::getInstance()->export();
+        $data = ScanBoxService::getInstance()->getExportData();
+        ExportService::getInstance()->export($data, ScanBoxService::MODEL);
     }
 }

@@ -9,8 +9,10 @@ class MarioService extends IotService
 {
     const MODEL = 'FR010';
 
-    public static $GET_SERVER_UNIX_TIME_COMMAND = [
-        'c01' => ''
+    public static $SERVER_UNIX_TIME_COMMAND = [
+        'c01' => [
+            'timestamp' => ''
+        ]
     ];
 
     public static $DOWNLOAD_FIRMWARE_COMMAND = [

@@ -15,7 +15,7 @@ return [
         ]
     ],
     'mario' => [
-        'host' => env('MARIO_EMQTT_HOST', 'mqtt://mario.sunmi.com:81'),
+        'host' => env('MARIO_EMQTT_HOST', 'mqtt://uatmario.sunmi.com:81'),
         'data_client' => [
             'client_id' => 'marioServerData',
             "username" => 'marioServerData',

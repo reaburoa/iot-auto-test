@@ -41,9 +41,10 @@ class MarioInitDataCommand extends Command
     {
         echo "Start init machine data ...\n";
         $msn_list = [
-            'F102P88H00154',
+           /*'F102P88H00154',
             'F102P88H00148',
-            'F102P88H00111',
+            'F102P88H00111',*/
+            'F102P88H00117'
         ];
         $total = IotService::getInstance()->initTestMachine($msn_list, MarioService::MODEL);
         echo "Init data finish, all machine ".count($msn_list)." init ".$total." success.\n";

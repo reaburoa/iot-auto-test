@@ -3,11 +3,6 @@
 namespace App\Services;
 
 use App\Core\Service;
-use App\Models\AutoTest\RecordModel;
-use App\Models\AutoTest\TestFirmwareDetailModel;
-use App\Models\AutoTest\TestMachineModel;
-use App\Models\AutoTest\TestSettingModel;
-use App\Models\AutoTest\TestTimesModel;
 use PHPExcel;
 use PHPExcel_IOFactory;
 
@@ -51,12 +46,16 @@ class ExportService extends Service
         $PHPExcel->setActiveSheetIndex(0);
 
         $PHPWriter = PHPExcel_IOFactory::createWriter($PHPExcel, 'Excel2007');
-        $filename = "小闪自动化升级测试报告(" . date("Y-m-d") . ").xlsl";
+        $ar_filename = [
+            ScanBoxService::MODEL => "小闪自动化升级测试报告(" . date("Y-m-d") . ").xlsx",
+            MarioService::MODEL => "码利奥自动化升级测试报告(" . date("Y-m-d") . ").xlsx",
+        ];
+        $filename = !isset($ar_filename[$model]) ? "自动化升级测试报告(" . date("Y-m-d") . ").xlsx" : $ar_filename[$model];
+        $PHPWriter->save($filename);
         /*header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');//告诉浏览器数据excel07文件
         header('Content-Disposition: attachment;filename="' . $filename . '"');  //告诉浏览器将输出文件的名称
         header('Cache-Control: max-age=0');  //禁止缓存
         $PHPWriter->save('php://output');*/
-        $PHPWriter->save($filename);
     }
 
     private function CreateBlock(&$PHPSheet, $Block, $Text, $BackColor = "")
@@ -103,7 +102,6 @@ class ExportService extends Service
     private function CalculateRound(&$PHPSheet, $turn_data)
     {
         foreach ($turn_data as $key => $value) {
-            $allTime = 0;
             $firmware_ok_total = 0;
             $firmware_fail_total = 0;
             $setting_ok_total = 0;
@@ -113,22 +111,19 @@ class ExportService extends Service
             $min_time = 0;
             foreach ($value as $machine) {
                 if ($machine['firmware_upgrade_state'] == 1) {
-                    $firmware_ok_total ++;
+                    $firmware_ok_total++;
                 } else {
-                    $firmware_fail_total ++;
+                    $firmware_fail_total++;
                 }
-                if ($machine['isConfig'] == 1) {
-                    $roundData['sConfig']++;
-                } else {
-                    $roundData['fConfig']++;
-                }
-                $start_time = $machine['firmware_upgrade_start'] != '0000-00-00 00:00:00' ? strtotime($machine['firmware_upgrade_end']) : 0;
-                $end_time = $machine['firmware_upgrade_end'] != '0000-00-00 00:00:00' ? strtotime($machine['firmware_upgrade_start']) : 0;
+                // todo 小闪配置
+                $start_time = $machine['firmware_upgrade_start'] != '0000-00-00 00:00:00' ? strtotime($machine['firmware_upgrade_start']) : 0;
+                $end_time = $machine['firmware_upgrade_end'] != '0000-00-00 00:00:00' ? strtotime($machine['firmware_upgrade_end']) : 0;
                 if ($start_time != 0 && $end_time != 0) {
-                    $time = $start_time - $end_time;
+                    $time = $end_time - $start_time;
                     $all_time += $time;
+                    $min_time = $time;
                     $max_time = $max_time < $time ? $time : $max_time;
-                    $min_time = $min_time > $time ? $time : $min_time;
+                    $min_time = $min_time < $time ? $min_time : $time;
                 }
             }
             $avg_time = 0;
@@ -138,9 +133,9 @@ class ExportService extends Service
             $this->CreateBlock($PHPSheet, "A" . ($key + 5), $key);
             $this->CreateBlock($PHPSheet, "B" . ($key + 5), count($value));
             $this->CreateBlock($PHPSheet, "C" . ($key + 5), $firmware_ok_total);
-            $this->CreateBlock($PHPSheet, "D" . ($key + 5), $roundData['sConfig']);
+            $this->CreateBlock($PHPSheet, "D" . ($key + 5), 0);
             $this->CreateBlock($PHPSheet, "E" . ($key + 5), $firmware_fail_total);
-            $this->CreateBlock($PHPSheet, "F" . ($key + 5), $roundData['fConfig']);
+            $this->CreateBlock($PHPSheet, "F" . ($key + 5), 0);
             $this->CreateBlock($PHPSheet, "G" . ($key + 5), $this->getTakeTime($max_time));
             $this->CreateBlock($PHPSheet, "H" . ($key + 5), $this->getTakeTime($min_time));
             $this->CreateBlock($PHPSheet, "I" . ($key + 5), $this->getTakeTime($avg_time));
@@ -148,40 +143,29 @@ class ExportService extends Service
         }
     }
 
-    private function CalculateAll(&$PHPSheet, $RoundData)
+    private function CalculateAll(&$PHPSheet, $turn_data)
     {
         $StartLine = 1;
-        foreach ($RoundData as $key => $Round) {
-            $roundData['round'] = $key;
-            $StartLine += $this->CreateHead($PHPSheet, $StartLine, $key, $Round[0]['day']);
-            foreach ($Round as $machine) {
-                $machineData['sn'] = $machine['sn'];
-                $machineData['startTime'] = $machine['updateStart'];
-                $machineData['endTime'] = $machine['updateEnd'];
-                if ($machine['updateEnd'] != 0) {
-                    $machineData['time'] = $machineData['endTime'] - $machineData['startTime'];
-                } else {
-                    $machineData['time'] = 0;
+        foreach ($turn_data as $key => $value) {
+            $StartLine += $this->CreateHead($PHPSheet, $StartLine, $key, strtotime($value[0]['created_at']));
+            foreach ($value as $machine) {
+                $start_time = $machine['firmware_upgrade_start'] == '0000-00-00 00:00:00' ? 0 : strtotime($machine['firmware_upgrade_start']);
+                $end_time = $machine['firmware_upgrade_end'] == '0000-00-00 00:00:00' ? 0 : strtotime($machine['firmware_upgrade_end']);
+                $take_time = $end_time != 0 ? $end_time - $start_time : 0;
+                $upgrade_ret = '否';
+                $err_desc = $machine['firmware_download_state'] == -1 ? '设备下载长时间未响应' : '未知';
+                if ($machine['firmware_upgrade_state'] == 1) {
+                    $upgrade_ret = "是";
+                    $err_desc = "/";
                 }
-                if ($machine['updateError'] == 0 && $machine['isUpdate'] == 1) {
-                    $machineData['isUpdate'] = "是";
-                    $machineData['error'] = "/";
-                } else {
-                    $machineData['isUpdate'] = "否";
-                    $machineData['error'] = "设备下载长时间未响应";
-                }
-                if ($machine['isConfig'] == 1) {
-                    $machineData['isConfig'] = "是";
-                } else {
-                    $machineData['isConfig'] = "否";
-                }
-                $this->CreateBlock($PHPSheet, "A{$StartLine}", $machineData['sn']);
-                $this->CreateBlock($PHPSheet, "B{$StartLine}", date("H:i:s", $machineData['startTime']));
-                $this->CreateBlock($PHPSheet, "C{$StartLine}", $machineData['endTime'] == 0 ? "/" : date("H:i:s", $machineData['endTime']));
-                $this->CreateBlock($PHPSheet, "D{$StartLine}", $this->getTakeTime($machineData['time']));
-                $this->CreateBlock($PHPSheet, "E{$StartLine}:F{$StartLine}", $machineData['isUpdate']);
-                $this->CreateBlock($PHPSheet, "G{$StartLine}:H{$StartLine}", $machineData['isConfig']);
-                $this->CreateBlock($PHPSheet, "I{$StartLine}", $machineData['error']);
+                // todo 小闪配置
+                $this->CreateBlock($PHPSheet, "A{$StartLine}", $machine['msn']);
+                $this->CreateBlock($PHPSheet, "B{$StartLine}", date("H:i:s", $start_time));
+                $this->CreateBlock($PHPSheet, "C{$StartLine}", $end_time == 0 ? "/" : date("H:i:s", $end_time));
+                $this->CreateBlock($PHPSheet, "D{$StartLine}", $this->getTakeTime($take_time));
+                $this->CreateBlock($PHPSheet, "E{$StartLine}:F{$StartLine}", $upgrade_ret);
+                $this->CreateBlock($PHPSheet, "G{$StartLine}:H{$StartLine}", '');
+                $this->CreateBlock($PHPSheet, "I{$StartLine}", $err_desc);
                 $StartLine++;
             }
         }
