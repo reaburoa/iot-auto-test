@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AutoTest\TestAppDetailModel;
 use App\Models\AutoTest\TestFirmwareDetailModel;
 use App\Models\AutoTest\TestMachineModel;
 
@@ -159,6 +160,22 @@ class MarioService extends IotService
             'firmware_version' => $firmware,
             'task' => $task
         ];
+    }
+
+    /**
+     * 下载完成
+     */
+    public function dealS05($msn, $data, $model)
+    {
+        $download = $data['s05'];
+        $detail_model = new TestAppDetailModel();
+        $has_upgrade = $detail_model->hasUpgradeApp($msn, $model);
+        if (empty($has_upgrade)) {
+            echo "{$msn} has no upgrade task ...\n";
+            return false;
+        }
+        $firmware_download_state = strtolower($download) == 'success' ? 1 : 0;
+        return $detail_model->updateAppDownloadState($msn, $model, $has_upgrade['to_app_version'], $firmware_download_state);
     }
 
     public function getDataUser()

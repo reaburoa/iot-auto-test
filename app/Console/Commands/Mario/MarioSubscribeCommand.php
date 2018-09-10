@@ -82,7 +82,7 @@ class MarioSubscribeCommand extends Command
             } elseif (isset($content['s04'])) {
                 $ret = MarioService::getInstance()->dealS04($msn, $content, MarioService::MODEL);
             } elseif (isset($content['s05'])) {
-                
+
             }
         } elseif ($ar_topic[0] == '$SYS') {
             $msn = $ar_topic[4];

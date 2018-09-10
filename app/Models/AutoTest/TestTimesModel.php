@@ -33,8 +33,8 @@ class TestTimesModel extends Model
             ->where('model', $model)->update($update_value);
     }
 
-    public function getByTimes($times)
+    public function getByTimes($times, $model)
     {
-        return $this->getModel()->where('turn_times', $times)->first();
+        return $this->getModel()->where('model', $model)->where('turn_times', $times)->first();
     }
 }

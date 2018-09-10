@@ -35,7 +35,7 @@ class TestAppDetailModel extends Model
         return $ret ? json_decode(json_encode($ret), true) : $ret;
     }
 
-    public function hasUpgradeFirmware($msn, $model)
+    public function hasUpgradeApp($msn, $model)
     {
         $ret = self::query()
             ->where('model', $model)

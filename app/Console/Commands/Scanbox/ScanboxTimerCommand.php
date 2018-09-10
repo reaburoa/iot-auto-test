@@ -72,11 +72,11 @@ class ScanboxTimerCommand extends Command
                     rsort($keys);
                     $m_times = new TestTimesModel();
                     $times = $keys[0];
-                    $ret = $m_times->getByTimes($times);
-                    if ($ret && (time() - strtotime($ret->created_at)) >= 90 * 60) {
+                    $ret = $m_times->getByTimes($times, ScanBoxService::MODEL);
+                    if ($ret && (time() - strtotime($ret->created_at)) >= 120 * 60) {
                         $all_msn = $m_model->getAllMsn(ScanBoxService::MODEL);
                         $msn_list = array_column($all_msn, 'msn');
-                        echo "Turn {$times} has timeout (time is: 90 minutes), will restart all and run new turn ...\n";
+                        echo "Turn {$times} has timeout (time is: 120 minutes), will restart all and run new turn ...\n";
                     } else {
                         $not_current_turns = $m_model->getNotTurn($times, ScanBoxService::MODEL);
                         $msn_list = array_column($not_current_turns, 'msn');
