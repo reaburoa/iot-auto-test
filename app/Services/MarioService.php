@@ -199,4 +199,18 @@ class MarioService extends IotService
             "username" => $user['username']
         ];
     }
+
+    public function getExportData()
+    {
+        $data = TestFirmwareDetailModel::query()
+            ->where('model', self::MODEL)
+            ->orderBy('turn_times')->orderBy('msn')->get()->toArray();
+        $list = [];
+        foreach ($data as $value) {
+            $list[$value['turn_times']][] = $value;
+        }
+        unset($data);
+
+        return $list;
+    }
 }

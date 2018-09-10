@@ -81,8 +81,12 @@ class MarioSubscribeCommand extends Command
 
             } elseif (isset($content['s04'])) {
                 $ret = MarioService::getInstance()->dealS04($msn, $content, MarioService::MODEL);
+                $t = MarioService::getInstance()->getSubTopic($msn, MarioService::MODEL);
+                $emqtt_instance->publish($t, json_encode(MarioService::RESTART_COMMAND));
             } elseif (isset($content['s05'])) {
-
+                $ret = MarioService::getInstance()->dealS05($msn, $content, MarioService::MODEL);
+                $t = MarioService::getInstance()->getSubTopic($msn, MarioService::MODEL);
+                $emqtt_instance->publish($t, json_encode(MarioService::RESTART_COMMAND));
             }
         } elseif ($ar_topic[0] == '$SYS') {
             $msn = $ar_topic[4];

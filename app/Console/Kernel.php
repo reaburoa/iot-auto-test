@@ -2,11 +2,11 @@
 
 namespace App\Console;
 
+use App\Console\Commands\Mario\MarioExportCommand;
 use App\Console\Commands\Mario\MarioInitDataCommand;
 use App\Console\Commands\Mario\MarioSubscribeCommand;
 use App\Console\Commands\Scanbox\ScanboxExportCommand;
 use App\Console\Commands\Scanbox\ScanboxInitDataCommand;
-use App\Console\Commands\Scanbox\ScanboxPublishCommand;
 use App\Console\Commands\Scanbox\ScanboxSubscribeCommand;
 use App\Console\Commands\Scanbox\ScanboxTimerCommand;
 use Illuminate\Console\Scheduling\Schedule;
@@ -21,12 +21,12 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         ScanboxInitDataCommand::class,
-        ScanboxPublishCommand::class,
         ScanboxSubscribeCommand::class,
+        ScanboxTimerCommand::class,
+        ScanboxExportCommand::class,
+        MarioExportCommand::class,
         MarioInitDataCommand::class,
         MarioSubscribeCommand::class,
-        ScanboxTimerCommand::class,
-        ScanboxExportCommand::class
     ];
 
     /**

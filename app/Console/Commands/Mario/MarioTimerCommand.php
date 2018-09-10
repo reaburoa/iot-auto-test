@@ -1,30 +1,29 @@
 <?php
 
-namespace App\Console\Commands\Scanbox;
+namespace App\Console\Commands\Mario;
 
 use App\Models\AutoTest\TestMachineModel;
 use App\Models\AutoTest\TestTimesModel;
-use App\Services\ScanBoxService;
+use App\Services\MarioService;
 use Illuminate\Console\Command;
 use Workerman\Mqtt\Client;
 use Workerman\Worker;
 
-class ScanboxTimerCommand extends Command
+class MarioTimerCommand extends Command
 {
-    public static $restart_times = [];
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'scan_box:timer {op}';
+    protected $signature = 'mario:timer {op}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = '监控小闪每轮测试';
+    protected $description = '码利奥每轮测试监控';
 
     /**
      * Create a new command instance.
@@ -48,7 +47,7 @@ class ScanboxTimerCommand extends Command
         $argv[0] = 'scan_box:timer';
         $argv[1] = $command;
         unset($argv[2]);
-        $user = ScanBoxService::getInstance()->getActiveUser();
+        $user = MarioService::getInstance()->getActiveUser();
         $worker = new Worker();
         $worker->onWorkerStart = function () use ($user) {
             $host = $user['host'];
@@ -61,7 +60,7 @@ class ScanboxTimerCommand extends Command
             $client->onConnect = function ($client) {
                 while (true) {
                     $m_model = new TestMachineModel();
-                    $test_turn = $m_model->getMachineTotalGroupByTestTurn(ScanBoxService::MODEL);
+                    $test_turn = $m_model->getMachineTotalGroupByTestTurn(MarioService::MODEL);
                     $test_turn = json_decode(json_encode($test_turn), true);
                     $keys = array_values(array_filter(array_column($test_turn, 'turn_times')));
                     if (empty($keys)) {
@@ -72,22 +71,22 @@ class ScanboxTimerCommand extends Command
                     rsort($keys);
                     $m_times = new TestTimesModel();
                     $times = $keys[0];
-                    $ret = $m_times->getByTimes($times, ScanBoxService::MODEL);
+                    $ret = $m_times->getByTimes($times, MarioService::MODEL);
                     if ($ret && (time() - strtotime($ret->created_at)) >= 120 * 60) {
-                        $all_msn = $m_model->getAllMsn(ScanBoxService::MODEL);
+                        $all_msn = $m_model->getAllMsn(MarioService::MODEL);
                         $msn_list = array_column($all_msn, 'msn');
                         echo "Turn {$times} has timeout (time is: 120 minutes), will restart all and run new turn ...\n";
                     } else {
-                        $not_current_turns = $m_model->getNotTurn($times, ScanBoxService::MODEL);
+                        $not_current_turns = $m_model->getNotTurn($times, MarioService::MODEL);
                         $msn_list = array_column($not_current_turns, 'msn');
                         echo "Not Turn {$times}, and machine will restart ...\n";
                     }
                     $topics = array_map(function ($val) {
-                        return ScanBoxService::getInstance()->getSubTopic($val, ScanBoxService::MODEL);
+                        return MarioService::getInstance()->getSubTopic($val, MarioService::MODEL);
                     }, $msn_list);
                     foreach ($topics as $t) {
-                        echo "Push to topic {$t} command ".json_encode(ScanBoxService::RESTART_COMMAND)."\n";
-                        $client->publish($t, json_encode(ScanBoxService::RESTART_COMMAND));
+                        echo "Push to topic {$t} command ".json_encode(MarioService::RESTART_COMMAND)."\n";
+                        $client->publish($t, json_encode(MarioService::RESTART_COMMAND));
                     }
                     echo "Will sleep 5 minutes wait for machine restart ...\n";
                     sleep(300);
