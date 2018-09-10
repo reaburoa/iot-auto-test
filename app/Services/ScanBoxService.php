@@ -113,10 +113,10 @@ class ScanBoxService extends IotService
         if ($upgrading_total > 0) {
             echo "{$machine_info['turn_times']} has other machine upgrade \n";
             return '';
-        } elseif ($upgrading_total == 0) {
+        }/* elseif ($machine_info['turn_times'] != 0 && $upgrading_total == 0) {
             echo "{$machine_info['turn_times']} has no machine upgrade and wait for restart all machine \n";
             return '';
-        }
+        }*/
         $m_model = new TestMachineModel();
         $will_grade_info = $this->getWillUpgradeInfo($machine_info);
         if (empty($will_grade_info)) {
