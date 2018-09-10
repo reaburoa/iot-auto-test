@@ -44,7 +44,7 @@ class IotService extends Service
         $now = date('Y-m-d H:i:s');
         // 查出所有轮次的正在更新机器总数
         foreach ($test_turn as $value) {
-            $has = $t_model->getByTimes($value['turn_times']);
+            $has = $t_model->getByTimes($value['turn_times'], $model);
             if ($has) {
                 $data = [
                     'total_machine' => $value['times'],
@@ -70,7 +70,7 @@ class IotService extends Service
         $total = $m_model->getTotalMachines($model);
         // 更新每轮次成功的机器数目
         foreach ($success_turn as $value) {
-            $has = $t_model->getByTimes($value['turn_times']);
+            $has = $t_model->getByTimes($value['turn_times'], $model);
             if ($has) {
                 $data = [
                     'succ_machine' => $value['times'],
