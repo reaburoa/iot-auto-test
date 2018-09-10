@@ -6,7 +6,7 @@ use App\Services\IotService;
 use App\Services\ScanBoxService;
 use Illuminate\Console\Command;
 
-class InitDataCommand extends Command
+class ScanboxInitDataCommand extends Command
 {
     /**
      * The name and signature of the console command.

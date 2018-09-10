@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 use Workerman\Mqtt\Client;
 use Workerman\Worker;
 
-class TimerCommand extends Command
+class ScanboxTimerCommand extends Command
 {
     public static $restart_times = [];
     /**

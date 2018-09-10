@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\AutoTest\TestFirmwareDetailModel;
 use App\Models\AutoTest\TestMachineModel;
 use App\Models\AutoTest\TestSettingModel;
-use App\Models\AutoTest\TestTimesModel;
 
 class ScanBoxService extends IotService
 {
@@ -228,5 +227,20 @@ class ScanBoxService extends IotService
             'password' => $user['password'],
             "username" => $user['username']
         ];
+    }
+
+    public function getExportData()
+    {
+        $data = TestFirmwareDetailModel::query()
+            ->where('model', self::MODEL)
+            ->orderBy('turn_times')->orderBy('msn')->get()->toArray();
+        $list = [];
+        $setting_data = TestSettingModel::query()->where('model', self::MODEL)->groupBy('msn')->get()->toArray();
+        foreach ($data as $value) {
+            $list[$value['turn_times']][] = $value;
+        }
+        unset($data);
+
+        return $list;
     }
 }

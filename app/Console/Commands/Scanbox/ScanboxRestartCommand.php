@@ -7,7 +7,7 @@ use App\Services\MqttService;
 use App\Services\ScanBoxService;
 use Illuminate\Console\Command;
 
-class RestartCommand extends Command
+class ScanboxRestartCommand extends Command
 {
     /**
      * The name and signature of the console command.

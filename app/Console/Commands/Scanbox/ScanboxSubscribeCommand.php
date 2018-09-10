@@ -7,7 +7,7 @@ use App\Services\MqttService;
 use App\Services\ScanBoxService;
 use Illuminate\Console\Command;
 
-class SubscribeCommand extends Command
+class ScanboxSubscribeCommand extends Command
 {
     /**
      * The name and signature of the console command.
