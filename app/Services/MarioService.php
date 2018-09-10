@@ -101,9 +101,12 @@ class MarioService extends IotService
             }
             return '';
         }
-        $upgrading_total = $detail_model->getUpgradingTotal($machine_info['turn_times']);
+        $upgrading_total = $detail_model->getUpgradingTotal($machine_info['turn_times'], self::MODEL);
         if ($upgrading_total > 0) {
             echo "{$machine_info['turn_times']} has other machine upgrade \n";
+            return '';
+        } elseif ($upgrading_total == 0) {
+            echo "{$machine_info['turn_times']} has no machine upgrade and wait for restart all machine \n";
             return '';
         }
         $m_model = new TestMachineModel();

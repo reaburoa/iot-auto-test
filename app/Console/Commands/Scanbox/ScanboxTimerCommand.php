@@ -65,8 +65,8 @@ class ScanboxTimerCommand extends Command
                     $test_turn = json_decode(json_encode($test_turn), true);
                     $keys = array_values(array_filter(array_column($test_turn, 'turn_times')));
                     if (empty($keys)) {
-                        echo "There is no test turn machine,and will sleep 5 minutes ...\n";
-                        sleep(300);
+                        echo "There is no test turn machine,and will sleep 0.5 minutes ...\n";
+                        sleep(30);
                         continue;
                     }
                     rsort($keys);
@@ -89,8 +89,8 @@ class ScanboxTimerCommand extends Command
                         echo "Push to topic {$t} command ".json_encode(ScanBoxService::RESTART_COMMAND)."\n";
                         $client->publish($t, json_encode(ScanBoxService::RESTART_COMMAND));
                     }
-                    echo "Will sleep 5 minutes wait for machine restart ...\n";
-                    sleep(300);
+                    echo "Will sleep 0.5 minutes wait for machine restart ...\n";
+                    sleep(30);
                 }
             };
             $client->connect();

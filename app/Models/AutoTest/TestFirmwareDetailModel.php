@@ -79,9 +79,10 @@ class TestFirmwareDetailModel extends Model
             ]);
     }
 
-    public function getUpgradingTotal($turn_times)
+    public function getUpgradingTotal($turn_times, $model)
     {
         return $this->getModel()
+            ->where('model', $model)
             ->where('turn_times', $turn_times)
             ->where('firmware_upgrade_state', -1)->count();
     }
