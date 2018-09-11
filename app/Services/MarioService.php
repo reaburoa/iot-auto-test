@@ -84,7 +84,7 @@ class MarioService extends IotService
         if ($last_upgrade_info && $last_upgrade_info['to_firmware_version'] == $data['bv']) {
             $upgrade_state = 1;
         }
-        $test_ret = $detail_model->updateFirmwareUpgradeState($msn, self::MODEL, $data['bv'], $upgrade_state);
+        $test_ret = $detail_model->updateFirmwareUpgradeState($msn, self::MODEL, $data['bv'], $upgrade_state, $machine_info['turn_times']);
         return $ret === false ? false : $machine_info;
     }
 
@@ -96,7 +96,7 @@ class MarioService extends IotService
         if ($last_test) {
             echo "{$msn} is upgrading ...\n";
             if ((time() - strtotime($last_test['created_at'])) >= 80 * 60) {
-                $detail_model->updateFirmwareUpgradeState($msn, self::MODEL, $last_test['to_firmware_version'], 2);
+                $detail_model->updateFirmwareUpgradeState($msn, self::MODEL, $last_test['to_firmware_version'], 2, $machine_info['turn_times']);
                 $emqtt_instance->publish($topic, json_encode(self::RESTART_COMMAND));
             }
             return '';

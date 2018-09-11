@@ -54,12 +54,13 @@ class TestFirmwareDetailModel extends Model
         return $this->getModel()->where('model', $model)->where('msn', $msn)->update($update_value);
     }
 
-    public function updateFirmwareUpgradeState($msn, $model, $to_firmware, $state = 1)
+    public function updateFirmwareUpgradeState($msn, $model, $to_firmware, $state = 1, $turn_times = 0)
     {
         return $this->getModel()
             ->where('model', $model)
             ->where('msn', $msn)
             ->where('to_firmware_version', $to_firmware)
+            ->where('turn_times', $turn_times)
             ->update([
                 'firmware_upgrade_end' => date('Y-m-d H:i:s'),
                 'firmware_upgrade_state' => $state,
