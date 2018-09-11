@@ -48,7 +48,6 @@ class IotService extends Service
             if ($has) {
                 $data = [
                     'total_machine' => $value['times'],
-                    'succ_machine' => 0,
                     'updated_at' => $now,
                 ];
                 $t_model->updateByTimes($value['turn_times'], $data, $model);
